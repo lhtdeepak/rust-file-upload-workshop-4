@@ -1,5 +1,6 @@
 use actix_web::{delete, get, post, put, web, web::Json, HttpResponse, Responder};
 use mongodb::Client;
+use user_controller::model::Claims;
 use user_controller::model::User;
 use uuid::Uuid;
 
@@ -84,6 +85,19 @@ pub async fn delete_user(client: web::Data<Client>, id: web::Path<String>) -> Ht
 
     match response {
         Ok(result) => HttpResponse::Ok().json(result),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+// JWT APIs ---------------------
+
+#[post("/create-jwt-token")]
+pub async fn create_jwt_token(req_data: Json<Claims>) -> HttpResponse {
+    let request_data = req_data.into_inner();
+
+    let token_detail = user_controller::create_jwt_token(request_data).await;
+    match token_detail {
+        Ok(token) => HttpResponse::Ok().json(token),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
