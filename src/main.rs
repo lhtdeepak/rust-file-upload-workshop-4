@@ -15,6 +15,7 @@ pub fn init(config: &mut web::ServiceConfig) {
             .service(routes::update_user)
             .service(routes::get_all_users)
             .service(routes::delete_user)
+            .service(routes::create_jwt_token)
             .service(routes::get_user),
     );
 }
