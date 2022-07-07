@@ -1,5 +1,7 @@
-use actix_web::{delete, get, post, put, web, web::Json, HttpResponse, Responder};
+use actix_web::{delete, get, post, put, web, web::Json, HttpRequest, HttpResponse};
+use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use mongodb::Client;
+use serde::{Deserialize, Serialize};
 use user_controller::model::Claims;
 use user_controller::model::User;
 use uuid::Uuid;
@@ -10,20 +12,40 @@ mod user_controller;
 #[path = "../app/models/user.rs"]
 mod model;
 
+const JWT_SECRET: &[u8] = b"secret";
+
 // routes
 
 #[get("/")]
-pub async fn index() -> impl Responder {
+pub async fn index() -> HttpResponse {
     HttpResponse::Ok().body("Rust microservice alive!")
 }
 
 #[get("/get-user/{id}")]
-pub async fn get_user(client: web::Data<Client>, id: web::Path<String>) -> HttpResponse {
-    let user_details = user_controller::get_user(client, id).await;
+pub async fn get_user(
+    client: web::Data<Client>,
+    id: web::Path<String>,
+    req: HttpRequest,
+) -> HttpResponse {
+    let headerToken = req
+        .headers()
+        .get("authorization")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_owned();
 
-    match user_details {
-        Ok(user) => HttpResponse::Ok().json(user),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    let token = headerToken[7..headerToken.len()].to_string();
+
+    if token.len() > 0 {
+        let user_details = user_controller::get_user(client, id).await;
+
+        match user_details {
+            Ok(user) => HttpResponse::Ok().json(user),
+            Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        }
+    } else {
+        HttpResponse::InternalServerError().body("authorization failed")
     }
 }
 

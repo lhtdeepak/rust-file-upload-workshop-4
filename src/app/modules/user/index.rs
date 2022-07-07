@@ -1,4 +1,5 @@
 use actix_web::web;
+use actix_web::HttpRequest;
 use chrono::prelude::*;
 use futures::stream::TryStreamExt;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -165,7 +166,7 @@ pub async fn delete_user(client: web::Data<Client>, id: String) -> Result<Delete
 
 pub async fn create_jwt_token(request_data: Claims) -> Result_JWT<String> {
     let expiration = Utc::now()
-        .checked_add_signed(chrono::Duration::seconds(60))
+        .checked_add_signed(chrono::Duration::minutes(10))
         .expect("valid timestamp")
         .timestamp();
 

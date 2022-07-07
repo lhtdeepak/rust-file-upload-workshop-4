@@ -3,6 +3,8 @@ use mongodb::Client;
 
 #[path = "app/constants/index.rs"]
 mod constants;
+#[path = "app/models/user.rs"]
+pub(crate) mod model;
 #[path = "routes/index.rs"]
 mod routes;
 
@@ -35,3 +37,38 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
+
+// Header authorization---------------------------------------------------------
+
+// .wrap_fn(|req, srv| {
+//     let header = req
+//         .headers()
+//         .get("authorization")
+//         .unwrap()
+//         .to_str()
+//         .unwrap()
+//         .to_owned();
+//     let fut = srv.call(req);
+//     async move {
+//         let res = fut.await?;
+//         Ok(res)
+//     }
+// })
+
+// pub fn validate() {
+//     let token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpZCI6IiIsInBhc3MiOiIifQ.P8BwWVmDHft3Eh4L6yeHL5OKmGNgITt_GGFtA3e1dIcYtQOrVmXP12Vxmd2EvijyqYvbiYQ3noyuc8MuvLO9jA";
+
+//     let token_data = match decode::<Claims>(
+//         token,
+//         &DecodingKey::from_secret(JWT_SECRET),
+//         &Validation::new(Algorithm::HS512),
+//     ) {
+//         Ok(t) => t,
+//         Err(e) => {
+//             eprintln!("error ------------->{}", e);
+//             panic!("Could not decode")
+//         }
+//     };
+
+//     println!("token_data ----- {:?}", token_data)
+// }
