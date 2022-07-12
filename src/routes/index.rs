@@ -2,18 +2,38 @@
 #![allow(unused_imports)]
 #![allow(unused)]
 #![allow(non_snake_case)]
+
+use actix_web::Responder;
+
 use actix_web::{delete, get, post, put, web, web::Json, HttpRequest, HttpResponse};
+
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+
 use mongodb::Client;
+
 use serde::{Deserialize, Serialize};
+
+use std::path::Path;
+
+use thiserror::Error;
+
 use user_controller::filter_model::Filter;
+
 use user_controller::model::Claims;
+
 use user_controller::model::User;
 use uuid::Uuid;
+
 #[path = "../app/modules/user/index.rs"]
 mod user_controller;
+
+#[path = "../app/modules/aws_s3/index.rs"]
+mod aws_controller;
+use aws_controller::model::Download_File;
+use aws_controller::model::Upload_File;
 #[path = "../app/models/user.rs"]
 mod model;
+
 const JWT_SECRET: &[u8] = b"secret";
 // routes
 #[get("/")]
@@ -114,5 +134,43 @@ pub async fn search_users(client: web::Data<Client>, new_filter: Json<Filter>) -
     match user_details {
         Ok(user_details) => HttpResponse::Ok().json(user_details),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+// upload file
+#[post("/upload-file")]
+
+pub async fn upload_file(path: Json<Upload_File>) -> impl Responder {
+    let x = path.file_path.to_string();
+
+    let file_path = Path::new(&x);
+
+    let file_detail = aws_controller::file_upload(file_path).await;
+
+    match file_detail {
+        Ok(data) => {
+            if data {
+                HttpResponse::Ok().body("file upload done .......")
+            } else {
+                HttpResponse::Ok().body("file upload fail ...")
+            }
+        }
+
+        Err(err) => {
+            HttpResponse::InternalServerError().body("file not upload due to same error ....")
+        }
+    }
+}
+
+#[get("/download_file/{file_name}")]
+pub async fn download_file(file_name:web::Path<String>) -> HttpResponse {
+    let path = file_name.as_str();
+    let file_detail = aws_controller::file_downloaded(path).await; 
+    match file_detail {
+        Ok(data) => {
+            if data {
+                HttpResponse::Ok().body("file download done .......")
+            }else{HttpResponse::Ok().body("file download fail ...")}
+        },
+        Err(err) => HttpResponse::InternalServerError().body(format!("file not download due to same error .... {:?}",err))
     }
 }
